@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CartItemContext, type CartContext } from '../context/CartItemContext'
 
 export default function CartItemProvider({
@@ -8,6 +8,12 @@ export default function CartItemProvider({
 }) {
   const [cartItems, setCart] = useState<Product[]>([])
 
+  useEffect(() => {
+    const cartItemsLocalStorage = localStorage.getItem('cartItems')
+
+    setCart([...cartItems, ...JSON.parse(cartItemsLocalStorage ?? '[]')])
+  }, [])
+
   const valueContext: CartContext = {
     cartItems,
     addCartItem(newCartItem) {
@@ -16,16 +22,17 @@ export default function CartItemProvider({
       )
 
       if (typeof itemFound === 'object') return
-      setCart([...cartItems, newCartItem])
+      const newCartItems = [...cartItems, newCartItem]
+      setCart(newCartItems)
+      localStorage.setItem('cartItems', JSON.stringify(newCartItems))
     },
 
     deleteCartItem(cartItemId) {
-      const itemFound = cartItems.find(
-        ({ productId }) => productId === cartItemId
+      const newCartItems = cartItems.filter(
+        ({ productId }) => productId !== cartItemId
       )
-
-      if (typeof itemFound === 'object') return
-      setCart(cartItems.filter(({ productId }) => productId !== cartItemId))
+      setCart(newCartItems)
+      localStorage.setItem('cartItems', JSON.stringify(newCartItems))
     },
   }
 

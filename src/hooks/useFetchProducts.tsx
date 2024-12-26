@@ -1,4 +1,6 @@
-export default async function useFetchProducts(): Promise<Product[][]> {
+export default async function useFetchProducts(): Promise<
+  [Product[][], Product[]]
+> {
   const productsOriginals = (async () => {
     const response = await fetch('/mock.json')
     const data = (await response.json()) as MockRoot
@@ -11,11 +13,11 @@ export default async function useFetchProducts(): Promise<Product[][]> {
     const product = (await productsOriginals)[i]
     productsArray.push(product)
 
-    if ((i + 1) % 10 === 0 && i !== 0) {
+    if ((i + 1) % 5 === 0 && i !== 0) {
       rootsProducts.push(productsArray)
       productsArray = []
     }
   }
 
-  return rootsProducts
+  return [rootsProducts, await productsOriginals]
 }

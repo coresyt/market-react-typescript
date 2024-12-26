@@ -1,17 +1,22 @@
+import { useEffect, useState } from 'react'
 import useCartItem from '../hooks/useCartItem'
 import className from '../lib/classJSX'
-import Cart from './icons/Cart'
-import Close from './icons/Close'
+import Exclusive from './icons/Exclusive'
 import Stars from './icons/Stars'
+import Close from './icons/Close'
+import Cart from './icons/Cart'
 
 export default function ProductItem({
   product,
   i,
+  isCart,
 }: {
   product: Product
   i: number
+  isCart?: boolean
 }) {
-  const { cartItems, setCartItems } = useCartItem()
+  const [itemFound, setItemFound] = useState(false)
+  const { cartItems, addCartItem, deleteCartItem } = useCartItem()
 
   let subtitle: string
   const { isSephoraExclusive, isNew, listPrice, ...currentSku } =
@@ -23,32 +28,50 @@ export default function ProductItem({
   if (subtitleArray.length <= 0) subtitle = ''
   else subtitle = `${subtitleArray.join('/')} - `
   const rating = Math.floor(Number(product.rating))
-  const itemFound = cartItems.find(
-    ({ productId }) => productId === product.productId
-  )
 
   const handleAddCart = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>
   ) => {
     e.preventDefault()
 
-    setCartItems(product)
+    addCartItem(product)
   }
+
+  const handleRemoveCart = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => {
+    e.preventDefault()
+
+    deleteCartItem(product.productId)
+  }
+
+  useEffect(() => {
+    const index = cartItems.findIndex(
+      ({ productId }) => productId === product.productId
+    )
+    setItemFound(index !== -1 ? false : true)
+  }, [cartItems])
 
   return (
     <div
-      className="flex size-full min-h-[400px] items-center justify-between overflow-hidden rounded-xl bg-zinc-800 p-5 max-sm:gap-3 sm:flex-col"
+      className="flex size-full min-h-[400px] flex-col items-center justify-between overflow-hidden rounded-xl bg-zinc-800 p-5"
       id={`${product.productId}-${i}-${Math.random()}`}
     >
-      <div className="flex w-full flex-col items-center gap-4 overflow-hidden">
+      <div className="flex w-full flex-col items-center gap-2 overflow-hidden">
         <h2
           className={className(
-            'text-lg font-bold text-zinc-400 [&>span]:text-zinc-700'
+            'text-lg font-bold text-zinc-400 [&>span>span]:text-zinc-700'
           )}
         >
-          {product.displayName} - <span>{product.brandName}</span>
+          {product.displayName}{' '}
+          <span style={isCart === true ? { display: 'none' } : {}}>
+            - <span>{product.brandName}</span>
+          </span>
         </h2>
-        <h3 className="text-lg font-bold text-zinc-400 [&>span]:text-zinc-600">
+        <h3
+          className="text-lg font-bold text-zinc-400 [&>span]:text-zinc-600"
+          style={isCart === true ? { display: 'none' } : {}}
+        >
           {subtitle} <span>{listPrice.replace(' - ', '/')} USD</span>
         </h3>
         <div className="flex gap-1">
@@ -58,13 +81,23 @@ export default function ProductItem({
               <Stars className="size-5 text-yellow-400" />
             ))}
         </div>
-        <button
-          className="flex size-10 items-center justify-center rounded-xl bg-zinc-700"
-          onClick={handleAddCart}
-        >
-          {itemFound && <Close className="size-5 text-zinc-400" />}
-          {!itemFound && <Cart className="size-5 text-zinc-200" />}
-        </button>
+        <div className="mb-5 flex">
+          <button
+            className="flex size-10 items-center justify-center rounded-xl bg-zinc-700"
+            onClick={(e) => {
+              if (itemFound) return handleAddCart(e)
+              else return handleRemoveCart(e)
+            }}
+          >
+            {itemFound !== true && <Close className="size-5 text-zinc-400" />}
+            {itemFound !== false && <Cart className="size-5 text-zinc-200" />}
+          </button>
+          {currentSku.isLimitedEdition === true ? (
+            <Exclusive className="size-10 text-yellow-400" />
+          ) : (
+            ''
+          )}
+        </div>
       </div>
       <img
         src={product.heroImage}
